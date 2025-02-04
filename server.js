@@ -110,6 +110,18 @@ platformApiRoutes.use('/products', productRouter);
 // remember to also add a proxy rule for them in /frontend/vite.config.js
 app.use('/api', platformApiRoutes);
 
+
+// Dummy API endpoint
+app.get('/api/hashtags', (req, res) => {
+    const hashtags = [
+        { id: 1, tag: "#example" },
+        { id: 2, tag: "#hashtag" },
+        { id: 3, tag: "#fdk" }
+    ];
+    const hashtagTags = hashtags.map(hashtag => hashtag.tag);
+    res.json({ items: hashtagTags });
+});
+
 // Serve the React app for all other routes
 app.get('*', (req, res) => {
     return res

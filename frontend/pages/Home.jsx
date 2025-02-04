@@ -13,6 +13,7 @@ const EXAMPLE_MAIN_URL = window.location.origin;
 export const Home = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [productList, setProductList] = useState([]);
+  const [productHashtags, setProductHashtags] = useState([]);
   const DOC_URL_PATH = "/help/docs/sdk/latest/platform/company/catalog/#getProducts";
   const DOC_APP_URL_PATH = "/help/docs/sdk/latest/platform/application/catalog#getAppProducts";
   const { application_id, company_id } = useParams();
@@ -33,6 +34,24 @@ export const Home = () => {
       setProductList(data.items);
     } catch (e) {
       console.error("Error fetching products:", e);
+    } finally {
+      setPageLoading(false);
+    }
+  };
+  const fetchHashtags = async (productId) => {
+    setPageLoading(true);
+    try {
+      const { data } = await axios.get(urlJoin(EXAMPLE_MAIN_URL, '/api/hashtags'),{
+        headers: {
+          "x-company-id": company_id,
+        }
+      });
+      setProductHashtags(prevState => ({
+        ...prevState,
+        [productId]: data.items
+      }));
+    } catch (e) {
+      console.error("Error fetching hashtags:", e);
     } finally {
       setPageLoading(false);
     }
@@ -130,6 +149,19 @@ export const Home = () => {
                       Category: <span>{product.category_slug}</span>
                     </div>
                   )}
+                  {/* Add Generate Hashtag button */}
+                {/* Add Generate Hashtag button */}
+                <button onClick={() => fetchHashtags(product.id)} className="generate-hashtag-button">
+                  Generate Hashtag
+                </button>
+                {/* Display hashtags for the specific product */}
+                {productHashtags[product.id] && (
+                  <div className="product-hashtags" data-testid={`product-hashtags-${product.id}`}>
+                    Hashtags: {productHashtags[product.id].map((tag, i) => (
+                      <span key={`hashtag-${i}`} className="hashtag">  <h1>{tag}</h1>  </span>
+                    ))}
+                  </div>
+                )}
                 </div>
               </div>
             ))}
