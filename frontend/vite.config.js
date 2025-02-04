@@ -10,6 +10,13 @@ const proxyOptions = {
   ws: false,
 };
 
+// New proxy options for Instagram-related endpoints
+const localProxyOptions = {
+  target: 'http://localhost:48271', // Your local server port
+  changeOrigin: true,
+  secure: false,
+};
+
 const host = process.env.HOST
   ? process.env.HOST.replace(/https?:\/\//, "")
   : "localhost";
@@ -49,7 +56,9 @@ export default defineConfig({
       "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
       "^/fp(/|(\\?.*)?$)": proxyOptions,
-     "^/adm(/|(\\?.*)?$)": proxyOptions,
+      "^/adm(/|(\\?.*)?$)": proxyOptions,
+      "^/publish": localProxyOptions,
+      "^/insta/login/callback": localProxyOptions
     },
   },
 });

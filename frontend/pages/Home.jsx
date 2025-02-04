@@ -73,7 +73,37 @@ export const Home = () => {
       setPageLoading(false);
     }
   };
-  
+
+  const handlePublish = async () => {
+    setPageLoading(true);
+    try {
+        const publishUrl = `${import.meta.env.VITE_HOST_URL}/publish`;
+        console.log("publishUrl ======> ", publishUrl);
+        window.open(publishUrl);
+        // const response = await axios.get(publishUrl);
+        // console.log("response ======> ", response);
+        
+        // if (response.data.success) {
+        //     // Store the Instagram credentials
+        //     const { accessToken, userId, username } = response.data.data;
+            
+        //     // Example: Post to Instagram
+        //     const postResponse = await axios.post(`${import.meta.env.VITE_HOST_URL}/api/instagram/post`, {
+        //         accessToken,
+        //         mediaUrl: 'YOUR_MEDIA_URL',
+        //         caption: 'Your caption here'
+        //     });
+
+        //     if (postResponse.data.success) {
+        //         console.log('Successfully posted to Instagram!');
+        //     }
+        // }
+    } catch (error) {
+        console.error("Error publishing:", error);
+    } finally {
+        setPageLoading(false);
+    }
+  };
 
   const productProfileImage = (media) => {
     if (!media || !media.length) {
@@ -144,6 +174,13 @@ export const Home = () => {
             </button>
           </div>
 
+          <div>
+            <div className="header-container">
+              <button className="publish-button" onClick={handlePublish}>
+                Publish
+              </button>
+            </div>
+          </div>
           <div>
             {productList.map((product, index) => (
               <div className="product-list-container flex-row" key={`product-${product.name}-${index}`}>

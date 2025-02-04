@@ -77,7 +77,102 @@ app.post('/api/webhook-events', async function(req, res) {
       console.log(`Error Processing ${req.body.event} Webhook`);
       return res.status(500).json({"success": false});
     }
-})
+});
+
+// Instagram OAuth routes
+app.get('/publish', async (req, res) => {
+    try {
+        // Instagram OAuth configuration
+        const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.INSTAGRAM_REDIRECT_URI)}&scope=user_profile,user_media&response_type=code`;
+        console.log("instagramAuthUrl ======> ", instagramAuthUrl);
+        res.redirect(instagramAuthUrl);
+    } catch (error) {
+        console.error('Instagram OAuth error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to initiate Instagram authorization'
+        });
+    }
+    // console.log("Here in publish route................")
+    // const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.INSTAGRAM_REDIRECT_URI)}&scope=user_profile,user_media&response_type=code`;
+    // console.log("instagramAuthUrl ======> ", instagramAuthUrl);
+    // res.redirect(instagramAuthUrl);
+});
+
+// Add a new endpoint to post to Instagram
+app.post('/api/instagram/post', async (req, res) => {
+    try {
+        const { accessToken, mediaUrl, caption } = req.body;
+
+        // Create a container for the media
+        const containerResponse = await axios.post(`https://graph.instagram.com/v12.0/me/media`, {
+            image_url: mediaUrl,
+            caption: caption,
+            access_token: accessToken
+        });
+
+        // Publish the container
+        const publishResponse = await axios.post(`https://graph.instagram.com/v12.0/me/media_publish`, {
+            creation_id: containerResponse.data.id,
+            access_token: accessToken
+        });
+
+        res.json({
+            success: true,
+            data: publishResponse.data
+        });
+
+    } catch (error) {
+        console.error('Instagram posting error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to post to Instagram'
+        });
+    }
+});
+
+// Callback endpoint that receives the code
+app.get('/insta/login/callback', async (req, res) => {
+    const { code } = req.query;
+    console.log("Authorization code received:", code);
+    
+    if (!code) {
+        return res.status(400).json({ error: 'Authorization code not received' });
+    }
+
+    try {
+        // Exchange the code for an access token
+        const tokenResponse = await axios.post('https://api.instagram.com/oauth/access_token', {
+            client_id: process.env.INSTAGRAM_CLIENT_ID,
+            client_secret: process.env.INSTAGRAM_CLIENT_SECRET,
+            grant_type: 'authorization_code',
+            redirect_uri: process.env.INSTAGRAM_REDIRECT_URI,
+            code: code
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+
+        const { access_token, user_id } = tokenResponse.data;
+
+        // Get user details
+        const userResponse = await axios.get(`https://graph.instagram.com/v12.0/${user_id}?fields=id,username&access_token=${access_token}`);
+
+        res.json({
+            success: true,
+            data: {
+                accessToken: access_token,
+                userId: user_id,
+                username: userResponse.data.username
+            }
+        });
+        
+    } catch (error) {
+        console.error('Instagram OAuth error:', error);
+        res.status(500).json({ error: 'Failed to process Instagram authorization' });
+    }
+});
 
 productRouter.get('/', async function view(req, res, next) {
     try {

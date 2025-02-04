@@ -175,3 +175,30 @@ body {
 .generate-story-button:hover:not(:disabled) {
   background-color: #0056b3; /* Darker blue on hover */
 }
+
+.header-container {
+  display: flex;
+  justify-content: flex-end; /* Changed from space-between to flex-end */
+  align-items: center;
+  padding: 16px 0; /* Adjusted padding */
+  margin-bottom: 20px; /* Added margin for spacing */
+  background-color: transparent; /* Changed from white to transparent */
+  border-bottom: none; /* Removed border */
+}
+
+.publish-button {
+  background-color: #0095f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-left: auto; /* Added to push button to the right */
+}
+
+.publish-button:hover {
+  background-color: #0081d6;
+}
