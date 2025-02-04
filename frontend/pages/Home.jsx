@@ -77,31 +77,35 @@ export const Home = () => {
   const handlePublish = async () => {
     setPageLoading(true);
     try {
-        const publishUrl = `${import.meta.env.VITE_HOST_URL}/publish`;
-        console.log("publishUrl ======> ", publishUrl);
-        window.open(publishUrl);
-        // const response = await axios.get(publishUrl);
-        // console.log("response ======> ", response);
-        
-        // if (response.data.success) {
-        //     // Store the Instagram credentials
-        //     const { accessToken, userId, username } = response.data.data;
-            
-        //     // Example: Post to Instagram
-        //     const postResponse = await axios.post(`${import.meta.env.VITE_HOST_URL}/api/instagram/post`, {
-        //         accessToken,
-        //         mediaUrl: 'YOUR_MEDIA_URL',
-        //         caption: 'Your caption here'
-        //     });
+      const hostUrl = import.meta.env.VITE_HOST_URL
+      const publishUrl = `${hostUrl}/publish`;
 
-        //     if (postResponse.data.success) {
-        //         console.log('Successfully posted to Instagram!');
-        //     }
-        // }
+      console.log("publishUrl ======> ", publishUrl);
+      console.log("env variable ======> ", import.meta.env.VITE_HOST_URL); // Debug log
+
+      window.open(publishUrl, '_blank');
+      // const response = await axios.get(publishUrl);
+      // console.log("response ======> ", response);
+      
+      // if (response.data.success) {
+      //     // Store the Instagram credentials
+      //     const { accessToken, userId, username } = response.data.data;
+          
+      //     // Example: Post to Instagram
+      //     const postResponse = await axios.post(`${import.meta.env.VITE_HOST_URL}/api/instagram/post`, {
+      //         accessToken,
+      //         mediaUrl: 'YOUR_MEDIA_URL',
+      //         caption: 'Your caption here'
+      //     });
+
+      //     if (postResponse.data.success) {
+      //         console.log('Successfully posted to Instagram!');
+      //     }
+      // }
     } catch (error) {
-        console.error("Error publishing:", error);
+      console.error("Error publishing:", error);
     } finally {
-        setPageLoading(false);
+      setPageLoading(false);
     }
   };
 

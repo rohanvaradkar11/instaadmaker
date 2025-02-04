@@ -12,7 +12,7 @@ const proxyOptions = {
 
 // New proxy options for Instagram-related endpoints
 const localProxyOptions = {
-  target: 'http://localhost:48271', // Your local server port
+  target: process.env.VITE_HOST_URL, // Your local server port
   changeOrigin: true,
   secure: false,
 };
@@ -42,6 +42,7 @@ if (host === "localhost") {
 
 export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),
+  envDir: '../',
   plugins: [react()],
   resolve: {
     preserveSymlinks: true,
