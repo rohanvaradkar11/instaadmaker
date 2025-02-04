@@ -9,7 +9,9 @@ const { setupFdk } = require("@gofynd/fdk-extension-javascript/express");
 const { SQLiteStorage } = require("@gofynd/fdk-extension-javascript/express/storage");
 const sqliteInstance = new sqlite3.Database('session_storage.db');
 const productRouter = express.Router();
-
+const { OpenAI } = require("openai");
+// Hypothetical import for an image generation API
+// const { ImageGenerationApi } = require("image-generation-api");
 
 const fdkExtension = setupFdk({
     api_key: process.env.EXTENSION_API_KEY,
@@ -83,6 +85,7 @@ productRouter.get('/', async function view(req, res, next) {
             platformClient
         } = req;
         const data = await platformClient.catalog.getProducts()
+        console.log("hiii")
         return res.json(data);
     } catch (err) {
         next(err);
@@ -110,7 +113,6 @@ platformApiRoutes.use('/products', productRouter);
 // remember to also add a proxy rule for them in /frontend/vite.config.js
 app.use('/api', platformApiRoutes);
 
-
 // Dummy API endpoint
 app.get('/api/hashtags', (req, res) => {
     const hashtags = [
@@ -120,6 +122,50 @@ app.get('/api/hashtags', (req, res) => {
     ];
     const hashtagTags = hashtags.map(hashtag => hashtag.tag);
     res.json({ items: hashtagTags });
+});
+
+// Initialize the OpenAI API client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Hypothetical configuration for the image generation API
+// const imageApiConfig = new ImageGenerationApi({
+//   apiKey: process.env.IMAGE_API_KEY,
+// });
+
+app.post('/api/generate-content', async (req, res) => {
+  const products = req.body.products; // Expecting an array of products
+
+  // Construct the prompt for text generation
+  const textPrompt = products.map(product => 
+    `Create a good background for an Instagram story advertisement for the product "${product.product_name}" by "${product.brand_name}". Include captions and hashtags.`
+  ).join("\n");
+
+  try {
+    // Generate text content
+    const textResponse = await openai.completions.create({
+      model: "text-davinci-003",
+      prompt: textPrompt,
+      max_tokens: 150,
+      temperature: 0.7,
+    });
+
+    // Hypothetical image generation logic
+    // const imageResponse = await imageApiConfig.createImage({
+    //   prompt: textPrompt,
+    //   // Additional parameters as required by the image API
+    // });
+
+    // Combine text and image responses
+    res.json({
+      content: textResponse.choices[0].text.trim(),
+      // imageUrl: imageResponse.data.imageUrl // Hypothetical image URL
+    });
+  } catch (error) {
+    console.error("Error generating content:", error);
+    res.status(500).json({ error: "Failed to generate content" });
+  }
 });
 
 // Serve the React app for all other routes

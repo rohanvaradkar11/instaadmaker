@@ -13,6 +13,7 @@ const EXAMPLE_MAIN_URL = window.location.origin;
 export const Home = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [productList, setProductList] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [productHashtags, setProductHashtags] = useState([]);
   const DOC_URL_PATH = "/help/docs/sdk/latest/platform/company/catalog/#getProducts";
   const DOC_APP_URL_PATH = "/help/docs/sdk/latest/platform/application/catalog#getAppProducts";
@@ -90,6 +91,22 @@ export const Home = () => {
 
   const isApplicationLaunch = () => !!application_id;
 
+  const handleCheckboxChange = (productId) => {
+    setSelectedProducts(prevSelected => {
+      if (prevSelected.includes(productId)) {
+        return prevSelected.filter(id => id !== productId);
+      } else if (prevSelected.length < 5) {
+        return [...prevSelected, productId];
+      }
+      return prevSelected;
+    });
+  };
+
+  const generateStory = () => {
+    // Logic to generate story using selected products
+    console.log("Generating story for products:", selectedProducts);
+  };
+
   return (
     <>
       {pageLoading ? (
@@ -111,10 +128,20 @@ export const Home = () => {
             </div>
             <div className="description">
               This is an illustrative Platform API call to fetch the list of products
-              in this company. Check your extension folder’s 'server.js'
+              in this company. Check your extension folder's 'server.js'
               file to know how to call Platform API and start calling API you
               require.
             </div>
+          </div>
+
+          <div className="generate-story-container">
+            <button
+              onClick={generateStory}
+              disabled={selectedProducts.length === 0}
+              className="generate-story-button"
+            >
+              Generate Story
+            </button>
           </div>
 
           <div>
@@ -149,20 +176,14 @@ export const Home = () => {
                       Category: <span>{product.category_slug}</span>
                     </div>
                   )}
-                  {/* Add Generate Hashtag button */}
-                {/* Add Generate Hashtag button */}
-                <button onClick={() => fetchHashtags(product.id)} className="generate-hashtag-button">
-                  Generate Hashtag
-                </button>
-                {/* Display hashtags for the specific product */}
-                {productHashtags[product.id] && (
-                  <div className="product-hashtags" data-testid={`product-hashtags-${product.id}`}>
-                    Hashtags: {productHashtags[product.id].map((tag, i) => (
-                      <span key={`hashtag-${i}`} className="hashtag">  <h1>{tag}</h1>  </span>
-                    ))}
-                  </div>
-                )}
                 </div>
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.includes(product.id)}
+                  onChange={() => handleCheckboxChange(product.id)}
+                  disabled={selectedProducts.length >= 5 && !selectedProducts.includes(product.id)}
+                  style={{ transform: 'scale(1.5)', marginLeft: 'auto' }}
+                />
               </div>
             ))}
           </div>
