@@ -56,3 +56,62 @@
 .retry-button:hover {
     background-color: #0056b3;
 }
+
+.hashtags, .captions {
+  font-size: 18px; /* Increase font size for better readability */
+  margin-bottom: 20px;
+  padding-left: 20px; /* Add padding to the left */
+}
+
+.hashtags input[type="checkbox"], .captions input[type="checkbox"] {
+  transform: scale(1.2); /* Make checkboxes larger */
+  margin-right: 10px;
+}
+
+.hashtags label, .captions label {
+  font-size: 18px; /* Increase font size for labels */
+}
+
+.button {
+  background-color: #007bff; /* Blueish color */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 10px;
+}
+
+.button:disabled {
+  background-color: #cccccc; /* Grey color when disabled */
+  cursor: not-allowed;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.back-button {
+  background-color: #d3d3d3; /* Greyish color */
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 10px;
+}
+
+.back-button:hover {
+  background-color: #a9a9a9; /* Darker grey on hover */
+}
+
+.generate-story-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}

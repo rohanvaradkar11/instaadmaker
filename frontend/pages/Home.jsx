@@ -211,9 +211,10 @@ export const Home = () => {
 
           <div>
             <div className="header-container">
-              <button className="publish-button" onClick={handlePublish}>
+              {/* Remove the Publish button */}
+              {/* <button className="publish-button" onClick={handlePublish}>
                 Publish
-              </button>
+              </button> */}
             </div>
           </div>
           <div>

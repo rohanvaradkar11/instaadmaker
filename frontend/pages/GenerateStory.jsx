@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom'; // Import useParams
 import './GenerateStory.css'; // Import the CSS file
+import StoryPreview from '../components/StoryPreview';
+import loaderGif from '../public/assets/loader.gif'; // Assuming you have a loader GIF
 
 function GenerateStory() {
     const location = useLocation();
@@ -12,8 +14,10 @@ function GenerateStory() {
     const [selectedCaptions, setSelectedCaptions] = useState([]);
     const [imageConfirmed, setImageConfirmed] = useState(false);
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false); // New loading state
 
     const fetchGeneratedContent = useCallback(() => {
+        setLoading(true); // Set loading to true when API call starts
         const requestData = selectedProducts.map(product => ({
             brandName: product.brand?.name || 'Unknown Brand',
             categoryName: product.category_slug || 'Unknown Category'
@@ -51,6 +55,9 @@ function GenerateStory() {
         .catch(error => {
             console.error('Error generating content:', error);
             setError(error.message);
+        })
+        .finally(() => {
+            setLoading(false); // Set loading to false when API call completes
         });
     }, [selectedProducts]);
 
@@ -99,18 +106,24 @@ function GenerateStory() {
                     </div>
                 ))}
             </div>
-            {error ? (
+            {loading ? (
+                <div className="loader">
+                    <img src={loaderGif} alt="Loading..." />
+                </div>
+            ) : error ? (
                 <div className="error-message">
                     <p>Error: {error}</p>
-                    <button onClick={fetchGeneratedContent} className="retry-button">Retry</button>
+                    <button onClick={fetchGeneratedContent} className="button">Retry</button>
                 </div>
             ) : generatedContent && (
                 <div className="generated-content">
-                    <div className="image-container">
-                        <img src={generatedContent.imageUrl} alt="Generated" />
-                    </div>
-                    <button onClick={handleImageConfirmation}>Confirm Image</button>
-                    <button>Regenerate Image</button>
+                    <StoryPreview
+                        imageUrl={generatedContent.imageUrl}
+                        hashtags={selectedHashtags}
+                        captions={selectedCaptions}
+                    />
+                    <button onClick={handleImageConfirmation} className="button">Confirm Image</button>
+                    <button onClick={fetchGeneratedContent} className="button">Regenerate Image</button>
                     <div className="hashtags">
                         <h3>Select Hashtags:</h3>
                         {generatedContent.hashtags.map((hashtag, index) => (
@@ -139,12 +152,12 @@ function GenerateStory() {
                             </div>
                         ))}
                     </div>
-                    <button disabled={!canPreview}>Preview</button>
+                    <button disabled={!canPreview} className="button">Preview</button>
                 </div>
             )}
-            <button style={{ position: 'fixed', bottom: '10px', right: '10px' }}>
-                Publish
-            </button>
+            <div className="generate-story-container">
+                <button className="button">Generate Story</button>
+            </div>
         </div>
     );
 }

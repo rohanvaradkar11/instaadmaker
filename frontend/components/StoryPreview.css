@@ -1,0 +1,44 @@
+.story-preview {
+  position: relative;
+  width: 375px; /* Typical width for a phone screen */
+  height: 667px; /* Typical height for a phone screen */
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  border-radius: 20px; /* Rounded corners to mimic a phone */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for a lifted effect */
+  margin: 0 auto; /* Center the preview horizontally */
+}
+
+.story-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.story-content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.story-captions {
+  font-size: 18px; /* Adjusted for smaller screen */
+  margin-bottom: 20px;
+}
+
+.story-hashtags {
+  font-size: 16px; /* Adjusted for smaller screen */
+}
+
+.hashtag {
+  margin-right: 10px;
+} 
