@@ -12,6 +12,7 @@ const sqliteInstance = new sqlite3.Database('session_storage.db');
 const productRouter = express.Router();
 const { OpenAI } = require("openai");
 const { postStory } = require('./instagramService');
+const { generateAndUploadImage } = require('./utils/helpers'); // Adjust the path as necessary
 const INSTAGRAM_CALL_BACK_DOMAIN='https://83f2-125-22-87-250.ngrok-free.app'
 
 // Hypothetical import for an image generation API
@@ -223,40 +224,82 @@ const openai = new OpenAI({
 // });
 
 app.post('/api/generate-content', async (req, res) => {
-  const products = req.body.products; // Expecting an array of products
-  console.log("products", products)
+    const products = req.body.products; // Expecting an array of products
+    console.log("products", products);
 
   // Construct the prompt for text generation
   // [ { brandName: 'Generic', categoryName: 'others-level-3' } ]
   const textPrompt = products.map(product => 
-    `Create a good background for an Instagram story advertisement for the product "${product.product_name}" by "${product.brand_name}". Include captions and hashtags.`
+    `Create a good background, captions and hashtags for an Instagram story advertisement for the product "${product.brandName}" and category "${product.categoryName}". Include captions and hashtags.`
   ).join("\n");
+  const tuning = "Please keep the data pretty concise and trendy"
 
-  try {
-    console.log("in generate content:::::")
-    // Generate text content
-    // const textResponse = await openai.completions.create({
-    //   model: "text-davinci-003",
-    //   prompt: textPrompt,
-    //   max_tokens: 150,
-    //   temperature: 0.7,
-    // });
+  const instructions = `Provide data in only JSON format. With just two keys. hashtags, captions: each must be a array`;
+  const instructions_2 = "5 captions and 5 hashtags"
 
-    // Hypothetical image generation logic
-    // const imageResponse = await imageApiConfig.createImage({
-    //   prompt: textPrompt,
-    //   // Additional parameters as required by the image API
-    // });
 
-    // Combine text and image responses
-    // res.json({
-    //   content: textResponse.choices[0].text.trim(),
-      // imageUrl: imageResponse.data.imageUrl // Hypothetical image URL
-    // });
-  } catch (error) {
-    console.error("Error generating content:", error);
-    res.status(500).json({ error: "Failed to generate content" });
-  }
+  var final_prompt = `${textPrompt}\n${tuning}\n${instructions}\n${instructions_2}`;
+
+    try {
+        console.log("textPrompttttttttt", final_prompt)
+        console.log("Generating content...");
+
+
+        const textResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: final_prompt }],
+            max_tokens: 150,
+            temperature: 0.7
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            }
+        });
+
+        // Ensure response structure is correct
+        const generatedText = textResponse.data?.choices?.[0]?.message?.content?.trim();
+
+        if (!generatedText) {
+            throw new Error("OpenAI API response did not contain expected text.");
+    }
+        console.log("type of generated text", typeof generatedText)
+        console.log("generatedText", textResponse)
+        console.log("textResponseeeee", textResponse)
+        console.log("choicessss", textResponse.data.choices[0])
+
+        let parsedContent;
+        try {
+            parsedContent = JSON.parse(generatedText);
+        } catch (parseError) {
+            console.error("Error parsing generated text as JSON:", parseError);
+            return res.status(500).json({ error: "Failed to parse generated content" });
+        }
+
+        // Generate an image using the helper function
+        const image_desc = "image must be reliable, since it will affect busines, nothing too fancy, something related to the brand and its theme and simple, good for eyes."
+        var image_prompt = `${textPrompt}\n${image_desc}`
+        const imageUrl = await generateAndUploadImage(image_prompt);
+
+        // Combine text and image responses
+        console.log("parsedContent", parsedContent, parsedContent.hashtags, parsedContent.captions);
+        console.log("imageUrl", imageUrl)
+        if (imageUrl && parsedContent.captions && parsedContent.hashtags) {
+        
+            res.json({
+                success: true,
+                captions: parsedContent.captions,
+                hashtags: parsedContent.hashtags,
+                imageUrl: imageUrl
+            });
+        } 
+        else {
+            res.status(500).json({ error: "Failed to generate content" });
+        }
+    } catch (error) {
+        console.error("Error generating content:", error);
+        res.status(500).json({ error: "Failed to generate content" });
+    }
 });
 
 // Serve the React app for all other routes
