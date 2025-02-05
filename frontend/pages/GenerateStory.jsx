@@ -122,7 +122,6 @@ function GenerateStory() {
                         hashtags={selectedHashtags}
                         captions={selectedCaptions}
                     />
-                    <button onClick={handleImageConfirmation} className="button">Confirm Image</button>
                     <button onClick={fetchGeneratedContent} className="button">Regenerate Image</button>
                     <div className="hashtags">
                         <h3>Select Hashtags:</h3>

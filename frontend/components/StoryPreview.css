@@ -1,7 +1,7 @@
 .story-preview {
   position: relative;
-  width: 375px; /* Typical width for a phone screen */
-  height: 667px; /* Typical height for a phone screen */
+  width: 300px; /* Reduced width */
+  height: 533px; /* Reduced height to maintain aspect ratio */
   overflow: hidden;
   display: flex;
   justify-content: center;
