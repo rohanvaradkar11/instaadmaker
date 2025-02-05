@@ -82,8 +82,13 @@ app.post('/api/webhook-events', async function(req, res) {
 // Instagram OAuth routes
 app.get('/publish', async (req, res) => {
     try {
-        // Instagram OAuth configuration
-        const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.INSTAGRAM_REDIRECT_URI)}&scope=user_profile,user_media&response_type=code`;
+        // Using the correct Instagram Basic Display API endpoint
+        const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize?' + new URLSearchParams({
+            client_id: process.env.INSTAGRAM_CLIENT_ID,
+            redirect_uri: process.env.INSTAGRAM_REDIRECT_URI,
+            scope: 'instagram_business_basic,instagram_business_content_publish',
+            response_type: 'code'
+        }).toString();
         console.log("instagramAuthUrl ======> ", instagramAuthUrl);
         res.redirect(instagramAuthUrl);
     } catch (error) {
