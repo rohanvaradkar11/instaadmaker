@@ -13,7 +13,7 @@ const productRouter = express.Router();
 const { OpenAI } = require("openai");
 const { postStory } = require('./instagramService');
 const { generateAndUploadImage } = require('./utils/helpers'); // Adjust the path as necessary
-const INSTAGRAM_CALL_BACK_DOMAIN='https://83f2-125-22-87-250.ngrok-free.app'
+const INSTAGRAM_CALL_BACK_DOMAIN='https://aa09-2409-40c0-105a-a54a-38c2-ac55-48bd-e576.ngrok-free.app'
 
 // Hypothetical import for an image generation API
 // const { ImageGenerationApi } = require("image-generation-api");
@@ -139,14 +139,16 @@ app.get('/api/instagram/post', async (req, res) => {
             const storyData = {
                 accessToken: access_token,
                 imageUrl: req.body.imageUrl || 'https://miro.medium.com/v2/resize:fit:1024/1*Fj4jT_7yfiC7ERWYqSdRJA.jpeg',
+                userId: user_id,
                 caption: "Check out our new product! 🚀",
                 hashtags: ['newproduct', 'launch', 'exciting'],
                 link: {
                     url: "https://playclanbilling.fynd.io/",
-                    linkText: "Click here to shop now"
+                    linkText: "Shop Now"
                 }
             };
 
+            console.log("storyData", storyData)
             // Post story using the imported service
             const storyResult = await postStory(storyData);
 
