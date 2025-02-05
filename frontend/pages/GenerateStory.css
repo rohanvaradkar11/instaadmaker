@@ -1,0 +1,23 @@
+.product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.product-card {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 200px;
+}
+
+.product-card h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.product-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}

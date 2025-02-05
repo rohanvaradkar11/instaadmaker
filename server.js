@@ -236,20 +236,23 @@ const openai = new OpenAI({
 
 app.post('/api/generate-content', async (req, res) => {
   const products = req.body.products; // Expecting an array of products
+  console.log("products", products)
 
   // Construct the prompt for text generation
+  // [ { brandName: 'Generic', categoryName: 'others-level-3' } ]
   const textPrompt = products.map(product => 
     `Create a good background for an Instagram story advertisement for the product "${product.product_name}" by "${product.brand_name}". Include captions and hashtags.`
   ).join("\n");
 
   try {
+    console.log("in generate content:::::")
     // Generate text content
-    const textResponse = await openai.completions.create({
-      model: "text-davinci-003",
-      prompt: textPrompt,
-      max_tokens: 150,
-      temperature: 0.7,
-    });
+    // const textResponse = await openai.completions.create({
+    //   model: "text-davinci-003",
+    //   prompt: textPrompt,
+    //   max_tokens: 150,
+    //   temperature: 0.7,
+    // });
 
     // Hypothetical image generation logic
     // const imageResponse = await imageApiConfig.createImage({
@@ -258,10 +261,10 @@ app.post('/api/generate-content', async (req, res) => {
     // });
 
     // Combine text and image responses
-    res.json({
-      content: textResponse.choices[0].text.trim(),
+    // res.json({
+    //   content: textResponse.choices[0].text.trim(),
       // imageUrl: imageResponse.data.imageUrl // Hypothetical image URL
-    });
+    // });
   } catch (error) {
     console.error("Error generating content:", error);
     res.status(500).json({ error: "Failed to generate content" });
