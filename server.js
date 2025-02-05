@@ -250,15 +250,14 @@ app.post('/api/generate-content', async (req, res) => {
   // Construct the prompt for text generation
   // [ { brandName: 'Generic', categoryName: 'others-level-3' } ]
   const textPrompt = products.map(product => 
-    `Create a good background, captions and hashtags for an Instagram story advertisement for the product "${product.brandName}" and category "${product.categoryName}". Include captions and hashtags.`
+    `captions and hashtags for an Instagram story advertisement for the product "${product.brandName}" and category "${product.categoryName}". Include captions and hashtags.`
   ).join("\n");
-  const tuning = "A clean, modern Instagram story background for a trendy sneaker. The design should include space at the center for the product image overlay. Vibrant, high-contrast, and eye-catching."
 
   const instructions = `Provide data in only JSON format. With just two keys. hashtags, captions: each must be a array`;
   const instructions_2 = "5 captions and 5 hashtags"
 
 
-  var final_prompt = `${textPrompt}\n${tuning}\n${instructions}\n${instructions_2}`;
+  var final_prompt = `${textPrompt}\\n${instructions}\n${instructions_2}`;
 
     try {
         console.log("textPrompttttttttt", final_prompt)
@@ -297,8 +296,10 @@ app.post('/api/generate-content', async (req, res) => {
         }
 
         // Generate an image using the helper function
-        const image_desc = "image must be reliable, since it will affect busines, nothing too fancy, something related to the brand and its theme and simple, good for eyes."
-        var image_prompt = `${textPrompt}\n${tuning}\n${image_desc}`
+        const i_1 = "A good looping wallpaper for a insta story"
+        const i_2 = "A clean, modern Instagram story background for a insta story. Vibrant and good for eyes."
+        const i_3 = "Do not add any brand name or anything inside. Keep in plain and simple."
+        var image_prompt = `${i_1}\n${i_2}\n${i_3}`
         const imageUrl = await generateAndUploadImage(image_prompt);
 
         // Combine text and image responses
