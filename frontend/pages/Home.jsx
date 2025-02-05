@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import "./style/home.css";
 import greenDot from "../public/assets/green-dot.svg";
@@ -18,29 +18,30 @@ export const Home = () => {
   const DOC_URL_PATH = "/help/docs/sdk/latest/platform/company/catalog/#getProducts";
   const DOC_APP_URL_PATH = "/help/docs/sdk/latest/platform/application/catalog#getAppProducts";
   const { application_id, company_id } = useParams();
+  console.log("Application ID:", application_id); // Debug log
+  console.log("Company ID:", company_id); // Debug log
   const documentationUrl ='https://api.fynd.com'
   const navigate = useNavigate();
   
-  useEffect(() => {
-    isApplicationLaunch() ? fetchApplicationProducts() : fetchProducts();
-  }, [application_id]);
+  const isApplicationLaunch = useCallback(() => !!application_id, [application_id]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setPageLoading(true);
     try {
-      const { data } = await axios.get(urlJoin(EXAMPLE_MAIN_URL, '/api/products'),{
+      const { data } = await axios.get(urlJoin(EXAMPLE_MAIN_URL, '/api/products'), {
         headers: {
           "x-company-id": company_id,
         }
       });
+      console.log("Fetched Products:", data.items); // Debug log
       setProductList(data.items);
-      console.log("0th itemmmmm", data.items[0]);
     } catch (e) {
       console.error("Error fetching products:", e);
     } finally {
       setPageLoading(false);
     }
-  };
+  }, [company_id]);
+
   const fetchHashtags = async (productId) => {
     setPageLoading(true);
     try {
@@ -60,21 +61,39 @@ export const Home = () => {
     }
   };
 
-  const fetchApplicationProducts = async () => {
+  const fetchApplicationProducts = useCallback(async () => {
     setPageLoading(true);
     try {
-      const { data } = await axios.get(urlJoin(EXAMPLE_MAIN_URL, `/api/products/application/${application_id}`),{
+      const { data } = await axios.get(urlJoin(EXAMPLE_MAIN_URL, `/api/products/application/${application_id}`), {
         headers: {
           "x-company-id": company_id,
         }
-      })
+      });
+      console.log("Fetched Application Products:", data.items); // Debug log
       setProductList(data.items);
     } catch (e) {
       console.error("Error fetching application products:", e);
     } finally {
       setPageLoading(false);
     }
-  };
+  }, [application_id, company_id]);
+
+  useEffect(() => {
+    isApplicationLaunch() ? fetchApplicationProducts() : fetchProducts();
+
+    // Retrieve selected products from session storage
+    const storedSelectedProducts = sessionStorage.getItem('selectedProducts');
+    if (storedSelectedProducts) {
+      const parsedProducts = JSON.parse(storedSelectedProducts);
+      console.log("Retrieved Selected Products from Session Storage:", parsedProducts); // Debug log
+      setSelectedProducts(parsedProducts.map(product => product.id));
+    }
+  }, [application_id, fetchApplicationProducts, fetchProducts, isApplicationLaunch]);
+
+  useEffect(() => {
+    console.log("Product List:", productList); // Debug log
+    console.log("Selected Products:", selectedProducts); // Debug log
+  }, [productList, selectedProducts]);
 
   const handlePublish = async () => {
     setPageLoading(true);
@@ -125,8 +144,6 @@ export const Home = () => {
       .concat(isApplicationLaunch() ? DOC_APP_URL_PATH : DOC_URL_PATH);
   };
 
-  const isApplicationLaunch = () => !!application_id;
-
   const handleCheckboxChange = (productId) => {
     setSelectedProducts(prevSelected => {
       if (prevSelected.includes(productId)) {
@@ -143,7 +160,16 @@ export const Home = () => {
     const selectedProductData = productList.filter(product => selectedProducts.includes(product.id));
 
     console.log("Generating story for products::::::", selectedProductData);
-    navigate('/generate-story', { state: { selectedProducts: selectedProductData } });
+
+    // Save selected products to session storage
+    sessionStorage.setItem('selectedProducts', JSON.stringify(selectedProductData));
+
+    // Construct the path with company_id and application_id if available
+    const path = application_id 
+        ? `/company/${company_id}/application/${application_id}/generate-story` 
+        : `/company/${company_id}/generate-story`;
+
+    navigate(path, { state: { selectedProducts: selectedProductData } });
   };
 
   return (

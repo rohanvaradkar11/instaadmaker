@@ -13,12 +13,16 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
+    path: "/company/:company_id/generate-story",
+    element: <GenerateStory />
+  },
+  {
+    path: "/company/:company_id/application/:application_id/generate-story",
+    element: <GenerateStory />
+  },
+  {
     path: "/*", // Fallback route for all unmatched paths
     element: <NotFound />, // Component to render for unmatched paths
-  }, 
-  {
-    path: "/generate-story",
-    element: <GenerateStory />
   }
 ]);
 
