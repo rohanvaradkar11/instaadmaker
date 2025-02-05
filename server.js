@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const path = require("path");
 const sqlite3 = require('sqlite3').verbose();
@@ -10,6 +11,9 @@ const { SQLiteStorage } = require("@gofynd/fdk-extension-javascript/express/stor
 const sqliteInstance = new sqlite3.Database('session_storage.db');
 const productRouter = express.Router();
 const { OpenAI } = require("openai");
+const { postStory } = require('./services/instagramService');
+const INSTAGRAM_CALL_BACK_DOMAIN='https://815d-125-22-87-250.ngrok-free.app'
+
 // Hypothetical import for an image generation API
 // const { ImageGenerationApi } = require("image-generation-api");
 
@@ -83,13 +87,18 @@ app.post('/api/webhook-events', async function(req, res) {
 app.get('/publish', async (req, res) => {
     try {
         // Using the correct Instagram Basic Display API endpoint
+        const callbackUrl = new URL('/insta/login/callback', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        console.log("Callback URL ======> ", callbackUrl);
+
         const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize?' + new URLSearchParams({
             client_id: process.env.INSTAGRAM_CLIENT_ID,
-            redirect_uri: process.env.INSTAGRAM_REDIRECT_URI,
+            redirect_uri: callbackUrl,
             scope: 'instagram_business_basic,instagram_business_content_publish',
             response_type: 'code'
         }).toString();
+
         console.log("instagramAuthUrl ======> ", instagramAuthUrl);
+
         res.redirect(instagramAuthUrl);
     } catch (error) {
         console.error('Instagram OAuth error:', error);
@@ -98,48 +107,11 @@ app.get('/publish', async (req, res) => {
             error: 'Failed to initiate Instagram authorization'
         });
     }
-    // console.log("Here in publish route................")
-    // const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?client_id=${process.env.INSTAGRAM_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.INSTAGRAM_REDIRECT_URI)}&scope=user_profile,user_media&response_type=code`;
-    // console.log("instagramAuthUrl ======> ", instagramAuthUrl);
-    // res.redirect(instagramAuthUrl);
-});
-
-// Add a new endpoint to post to Instagram
-app.post('/api/instagram/post', async (req, res) => {
-    try {
-        const { accessToken, mediaUrl, caption } = req.body;
-
-        // Create a container for the media
-        const containerResponse = await axios.post(`https://graph.instagram.com/v12.0/me/media`, {
-            image_url: mediaUrl,
-            caption: caption,
-            access_token: accessToken
-        });
-
-        // Publish the container
-        const publishResponse = await axios.post(`https://graph.instagram.com/v12.0/me/media_publish`, {
-            creation_id: containerResponse.data.id,
-            access_token: accessToken
-        });
-
-        res.json({
-            success: true,
-            data: publishResponse.data
-        });
-
-    } catch (error) {
-        console.error('Instagram posting error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to post to Instagram'
-        });
-    }
 });
 
 // Callback endpoint that receives the code
-app.get('/insta/login/callback', async (req, res) => {
+app.get('/api/instagram/post', async (req, res) => {
     const { code } = req.query;
-    console.log("Authorization code received:", code);
     
     if (!code) {
         return res.status(400).json({ error: 'Authorization code not received' });
@@ -147,11 +119,12 @@ app.get('/insta/login/callback', async (req, res) => {
 
     try {
         // Exchange the code for an access token
+        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
         const tokenResponse = await axios.post('https://api.instagram.com/oauth/access_token', {
             client_id: process.env.INSTAGRAM_CLIENT_ID,
             client_secret: process.env.INSTAGRAM_CLIENT_SECRET,
             grant_type: 'authorization_code',
-            redirect_uri: process.env.INSTAGRAM_REDIRECT_URI,
+            redirect_uri: callbackUrl,
             code: code
         }, {
             headers: {
@@ -161,21 +134,37 @@ app.get('/insta/login/callback', async (req, res) => {
 
         const { access_token, user_id } = tokenResponse.data;
 
-        // Get user details
-        const userResponse = await axios.get(`https://graph.instagram.com/v12.0/${user_id}?fields=id,username&access_token=${access_token}`);
+        try {
+            // Post story using the imported service
+            const storyResult = await postStory(
+                access_token,
+                'https://miro.medium.com/v2/resize:fit:1024/1*Fj4jT_7yfiC7ERWYqSdRJA.jpeg', // Replace with actual image URL
+                '#test story posting'
+            );
 
-        res.json({
-            success: true,
-            data: {
-                accessToken: access_token,
-                userId: user_id,
-                username: userResponse.data.username
-            }
-        });
+            // Return success response with all data
+            res.json({
+                success: true,
+                data: {
+                    accessToken: access_token,
+                    userId: user_id,
+                    storyDetails: storyResult.data,
+                    message: 'Story posted successfully'
+                }
+            });
+
+        } catch (storyError) {
+            console.error('Story posting error:', storyError);
+            res.status(500).json(storyError);
+        }
         
     } catch (error) {
         console.error('Instagram OAuth error:', error);
-        res.status(500).json({ error: 'Failed to process Instagram authorization' });
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to process Instagram authorization',
+            details: error.response?.data || error.message
+        });
     }
 });
 
