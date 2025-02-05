@@ -13,7 +13,7 @@ const productRouter = express.Router();
 const { OpenAI } = require("openai");
 const { postStory } = require('./instagramService');
 const { generateAndUploadImage } = require('./utils/helpers'); // Adjust the path as necessary
-const INSTAGRAM_CALL_BACK_DOMAIN='https://aa09-2409-40c0-105a-a54a-38c2-ac55-48bd-e576.ngrok-free.app'
+const INSTAGRAM_CALL_BACK_DOMAIN='https://f01c-125-22-87-250.ngrok-free.app'
 
 // Hypothetical import for an image generation API
 // const { ImageGenerationApi } = require("image-generation-api");
@@ -130,15 +130,32 @@ app.get('/publish', async (req, res) => {
 
 // Callback endpoint that receives the code
 app.get('/api/instagram/post', async (req, res) => {
-    const { code, ImageUrl, caption, hashTags, productLink } = req.query;
+    console.log("req.query", req.query)
+    const { code, state } = req.query;
+    // const { code, ImageUrl, caption, hashTags, productLink } = req.query;
     
     if (!code) {
         return res.status(400).json({ error: 'Authorization code not received' });
     }
 
+    // Parse the state parameter to retrieve the original query parameters
+    const params = new URLSearchParams(state);
+    const ImageUrl = params.get('ImageUrl');
+    const caption = params.get('caption');
+    const hashTags = params.get('hashTags');
+    const productLink = params.get('productLink');
+
     try {
+        console.log("code", code)
+        const params = new URLSearchParams({
+            ImageUrl,
+            caption,
+            hashTags,
+            productLink
+        });
         // Exchange the code for an access token
-        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        // const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        const callbackUrl = new URL(`/api/instagram/post?${params.toString()}`, INSTAGRAM_CALL_BACK_DOMAIN).toString();
         const tokenResponse = await axios.post('https://api.instagram.com/oauth/access_token', {
             client_id: process.env.INSTAGRAM_CLIENT_ID,
             client_secret: process.env.INSTAGRAM_CLIENT_SECRET,
@@ -150,7 +167,7 @@ app.get('/api/instagram/post', async (req, res) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
+        console.log("tokenResponse", tokenResponse)
         const { access_token, user_id } = tokenResponse.data;
 
         try {
@@ -180,9 +197,14 @@ app.get('/api/instagram/post', async (req, res) => {
         
     } catch (error) {
         console.error('Instagram OAuth error:', error);
+        if (error.response) {
+            console.error('Error data::::::', error.response.data);
+            console.error('Error status:', error.response.status);
+            console.error('Error headers:', error.response.headers);
+        }
         res.status(500).json({ 
             success: false,
-            error: 'Failed to process Instagram authorization',
+            error: 'Failed to post story',
             details: error.response?.data || error.message
         });
     }

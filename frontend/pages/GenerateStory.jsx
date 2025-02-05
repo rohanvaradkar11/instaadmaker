@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'; // Impor
 import './GenerateStory.css'; // Import the CSS file
 import StoryPreview from '../components/StoryPreview';
 import loaderGif from '../public/assets/loader.gif'; // Assuming you have a loader GIF
+import axios from 'axios'; // Import axios for making API requests
 
 function GenerateStory() {
     const location = useLocation();
@@ -96,6 +97,37 @@ function GenerateStory() {
         navigate(path);
     };
 
+    const handlePostStory = async () => {
+        if (!generatedContent) return;
+
+        const payload = {
+            ImageUrl: generatedContent.imageUrl,
+            caption: selectedCaptions.join(' '),
+            hashTags: selectedHashtags.join(' '),
+            productLink: 'https://test-ad-maker.fynd.io/product/m6qemjpt_is-13441009'
+        };
+
+        try {
+            const hostUrl = import.meta.env.VITE_HOST_URL
+            const publishUrl = `${hostUrl}/publish`;
+            const queryParams = new URLSearchParams(payload).toString();
+            const fullUrl = `${publishUrl}?${queryParams}`;
+            // const response = await axios.get(fullUrl);
+            window.open(fullUrl, '_blank');
+            // const response = await axios.post(publishUrl, payload);
+            // if (response.status === 200 && response.data.redirectUrl) {
+            //     console.log('Redirecting to:', response.data.redirectUrl);
+            //     // window.location.href = response.data.redirectUrl; // Redirect to the URL
+            // } else {
+            //     console.error('Failed to post story:', response.data);
+            //     alert('Failed to post story.');
+            // }
+        } catch (error) {
+            console.error('Error posting story:', error);
+            alert('Error posting story.');
+        }
+    };
+
     // beautify this view to show the generated content
     return (
         <div>
@@ -166,7 +198,7 @@ function GenerateStory() {
                 </div>
             )}
             <div className="generate-story-container">
-                <button className="button">Generate Story</button>
+                <button onClick={handlePostStory} className="button">Post Story</button>
             </div>
         </div>
     );
