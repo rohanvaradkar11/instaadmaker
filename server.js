@@ -234,7 +234,7 @@ app.post('/api/generate-content', async (req, res) => {
   const textPrompt = products.map(product => 
     `Create a good background, captions and hashtags for an Instagram story advertisement for the product "${product.brandName}" and category "${product.categoryName}". Include captions and hashtags.`
   ).join("\n");
-  const tuning = "Please keep the data pretty concise and trendy"
+  const tuning = "A clean, modern Instagram story background for a trendy sneaker. The design should include space at the center for the product image overlay. Vibrant, high-contrast, and eye-catching."
 
   const instructions = `Provide data in only JSON format. With just two keys. hashtags, captions: each must be a array`;
   const instructions_2 = "5 captions and 5 hashtags"
@@ -280,7 +280,7 @@ app.post('/api/generate-content', async (req, res) => {
 
         // Generate an image using the helper function
         const image_desc = "image must be reliable, since it will affect busines, nothing too fancy, something related to the brand and its theme and simple, good for eyes."
-        var image_prompt = `${textPrompt}\n${image_desc}`
+        var image_prompt = `${textPrompt}\n${tuning}\n${image_desc}`
         const imageUrl = await generateAndUploadImage(image_prompt);
 
         // Combine text and image responses
@@ -296,7 +296,7 @@ app.post('/api/generate-content', async (req, res) => {
             });
         } 
         else {
-            res.status(500).json({ error: "Failed to generate content" });
+            res.status(400).json({ error: "Failed to generate content" });
         }
     } catch (error) {
         console.error("Error generating content:", error);
