@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import "./style/home.css";
 import greenDot from "../public/assets/green-dot.svg";
 import grayDot from "../public/assets/grey-dot.svg";
@@ -19,6 +19,7 @@ export const Home = () => {
   const DOC_APP_URL_PATH = "/help/docs/sdk/latest/platform/application/catalog#getAppProducts";
   const { application_id, company_id } = useParams();
   const documentationUrl ='https://api.fynd.com'
+  const navigate = useNavigate();
   
   useEffect(() => {
     isApplicationLaunch() ? fetchApplicationProducts() : fetchProducts();
@@ -33,6 +34,7 @@ export const Home = () => {
         }
       });
       setProductList(data.items);
+      console.log("0th itemmmmm", data.items[0]);
     } catch (e) {
       console.error("Error fetching products:", e);
     } finally {
@@ -137,8 +139,11 @@ export const Home = () => {
   };
 
   const generateStory = () => {
-    // Logic to generate story using selected products
-    console.log("Generating story for products:", selectedProducts);
+    // Filter the full product objects based on selected IDs
+    const selectedProductData = productList.filter(product => selectedProducts.includes(product.id));
+
+    console.log("Generating story for products::::::", selectedProductData);
+    navigate('/generate-story', { state: { selectedProducts: selectedProductData } });
   };
 
   return (
@@ -233,3 +238,5 @@ export const Home = () => {
     </>
   );
 }
+
+export default Home;
