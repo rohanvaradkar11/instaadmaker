@@ -12,6 +12,7 @@ function GenerateStory() {
     const [generatedContent, setGeneratedContent] = useState(null);
     const [selectedHashtags, setSelectedHashtags] = useState([]);
     const [selectedCaptions, setSelectedCaptions] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product
     const [imageConfirmed, setImageConfirmed] = useState(false);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false); // New loading state
@@ -77,11 +78,15 @@ function GenerateStory() {
         );
     };
 
+    const handleCheckboxChange = (productId) => {
+        setSelectedProduct(productId === selectedProduct ? null : productId);
+    };
+
     const handleImageConfirmation = () => {
         setImageConfirmed(true);
     };
 
-    const canPreview = imageConfirmed && selectedHashtags.length > 0 && selectedCaptions.length > 0;
+    const canPreview = selectedProduct && selectedHashtags.length > 0 && selectedCaptions.length > 0;
 
     // Add a back button to navigate to Home
     const handleBack = () => {
@@ -103,6 +108,12 @@ function GenerateStory() {
                         <p><strong>Brand:</strong> {product.brand?.name || 'Unknown Brand'}</p>
                         <p><strong>Category:</strong> {product.category_slug || 'Unknown Category'}</p>
                         <p><strong>Item Code:</strong> {product.item_code || 'N/A'}</p>
+                        <input
+                            type="checkbox"
+                            checked={selectedProduct === product.id}
+                            onChange={() => handleCheckboxChange(product.id)}
+                            style={{ transform: 'scale(1.5)', marginLeft: 'auto' }}
+                        />
                     </div>
                 ))}
             </div>

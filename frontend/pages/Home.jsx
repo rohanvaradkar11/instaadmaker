@@ -13,7 +13,7 @@ const EXAMPLE_MAIN_URL = window.location.origin;
 export const Home = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [productList, setProductList] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [productHashtags, setProductHashtags] = useState([]);
   const DOC_URL_PATH = "/help/docs/sdk/latest/platform/company/catalog/#getProducts";
   const DOC_APP_URL_PATH = "/help/docs/sdk/latest/platform/application/catalog#getAppProducts";
@@ -86,14 +86,14 @@ export const Home = () => {
     if (storedSelectedProducts) {
       const parsedProducts = JSON.parse(storedSelectedProducts);
       console.log("Retrieved Selected Products from Session Storage:", parsedProducts); // Debug log
-      setSelectedProducts(parsedProducts.map(product => product.id));
+      setSelectedProduct(parsedProducts[0]?.id || null);
     }
   }, [application_id, fetchApplicationProducts, fetchProducts, isApplicationLaunch]);
 
   useEffect(() => {
     console.log("Product List:", productList); // Debug log
-    console.log("Selected Products:", selectedProducts); // Debug log
-  }, [productList, selectedProducts]);
+    console.log("Selected Product:", selectedProduct); // Debug log
+  }, [productList, selectedProduct]);
 
   const handlePublish = async () => {
     setPageLoading(true);
@@ -145,31 +145,24 @@ export const Home = () => {
   };
 
   const handleCheckboxChange = (productId) => {
-    setSelectedProducts(prevSelected => {
-      if (prevSelected.includes(productId)) {
-        return prevSelected.filter(id => id !== productId);
-      } else if (prevSelected.length < 5) {
-        return [...prevSelected, productId];
-      }
-      return prevSelected;
-    });
+    setSelectedProduct(productId === selectedProduct ? null : productId);
   };
 
   const generateStory = () => {
-    // Filter the full product objects based on selected IDs
-    const selectedProductData = productList.filter(product => selectedProducts.includes(product.id));
+    // Filter the full product objects based on selected ID
+    const selectedProductData = productList.find(product => product.id === selectedProduct);
 
-    console.log("Generating story for products::::::", selectedProductData);
+    console.log("Generating story for product:", selectedProductData);
 
-    // Save selected products to session storage
-    sessionStorage.setItem('selectedProducts', JSON.stringify(selectedProductData));
+    // Save selected product to session storage
+    sessionStorage.setItem('selectedProducts', JSON.stringify([selectedProductData]));
 
     // Construct the path with company_id and application_id if available
     const path = application_id 
         ? `/company/${company_id}/application/${application_id}/generate-story` 
         : `/company/${company_id}/generate-story`;
 
-    navigate(path, { state: { selectedProducts: selectedProductData } });
+    navigate(path, { state: { selectedProducts: [selectedProductData] } });
   };
 
   return (
@@ -202,7 +195,7 @@ export const Home = () => {
           <div className="generate-story-container">
             <button
               onClick={generateStory}
-              disabled={selectedProducts.length === 0}
+              disabled={!selectedProduct}
               className="generate-story-button"
             >
               Generate Story
@@ -252,9 +245,8 @@ export const Home = () => {
                 </div>
                 <input
                   type="checkbox"
-                  checked={selectedProducts.includes(product.id)}
+                  checked={selectedProduct === product.id}
                   onChange={() => handleCheckboxChange(product.id)}
-                  disabled={selectedProducts.length >= 5 && !selectedProducts.includes(product.id)}
                   style={{ transform: 'scale(1.5)', marginLeft: 'auto' }}
                 />
               </div>
