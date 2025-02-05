@@ -87,8 +87,26 @@ app.post('/api/webhook-events', async function(req, res) {
 // Instagram OAuth routes
 app.get('/publish', async (req, res) => {
     try {
+        const requiredParams = ['ImageUrl', 'caption', 'hashTags', 'productLink'];
+        const missingParams = requiredParams.filter(param => !req.query[param]);
+
+        if (missingParams.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: `Missing required parameters: ${missingParams.join(', ')}`
+            });
+        }
+
+        // Define your parameters
+        const params = new URLSearchParams({
+            ImageUrl: req.query.ImageUrl,
+            caption: req.query.caption,
+            hashTags: req.query.hashTags,
+            productLink: req.query.productLink
+        });
+
         // Using the correct Instagram Basic Display API endpoint
-        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        const callbackUrl = new URL(`/api/instagram/post?${params.toString()}`, INSTAGRAM_CALL_BACK_DOMAIN).toString();
         console.log("Callback URL ======> ", callbackUrl);
 
         const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize?' + new URLSearchParams({
@@ -112,7 +130,7 @@ app.get('/publish', async (req, res) => {
 
 // Callback endpoint that receives the code
 app.get('/api/instagram/post', async (req, res) => {
-    const { code } = req.query;
+    const { code, ImageUrl, caption, hashTags, productLink } = req.query;
     
     if (!code) {
         return res.status(400).json({ error: 'Authorization code not received' });
@@ -138,12 +156,12 @@ app.get('/api/instagram/post', async (req, res) => {
         try {
             const storyData = {
                 accessToken: access_token,
-                imageUrl: req.body.imageUrl || 'https://miro.medium.com/v2/resize:fit:1024/1*Fj4jT_7yfiC7ERWYqSdRJA.jpeg',
+                imageUrl: ImageUrl,
                 userId: user_id,
-                caption: "Check out our new product! 🚀",
-                hashtags: ['newproduct', 'launch', 'exciting'],
+                caption: caption,
+                hashtags: hashTags.split(','), // Assuming hashTags is a comma-separated string
                 link: {
-                    url: "https://playclanbilling.fynd.io/",
+                    url: productLink,
                     linkText: "Shop Now"
                 }
             };
