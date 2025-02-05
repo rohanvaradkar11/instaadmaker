@@ -11,8 +11,8 @@ const { SQLiteStorage } = require("@gofynd/fdk-extension-javascript/express/stor
 const sqliteInstance = new sqlite3.Database('session_storage.db');
 const productRouter = express.Router();
 const { OpenAI } = require("openai");
-const { postStory } = require('./services/instagramService');
-const INSTAGRAM_CALL_BACK_DOMAIN='https://815d-125-22-87-250.ngrok-free.app'
+const { postStory } = require('./instagramService');
+const INSTAGRAM_CALL_BACK_DOMAIN='https://83f2-125-22-87-250.ngrok-free.app'
 
 // Hypothetical import for an image generation API
 // const { ImageGenerationApi } = require("image-generation-api");
@@ -87,7 +87,7 @@ app.post('/api/webhook-events', async function(req, res) {
 app.get('/publish', async (req, res) => {
     try {
         // Using the correct Instagram Basic Display API endpoint
-        const callbackUrl = new URL('/insta/login/callback', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
         console.log("Callback URL ======> ", callbackUrl);
 
         const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize?' + new URLSearchParams({
@@ -135,23 +135,22 @@ app.get('/api/instagram/post', async (req, res) => {
         const { access_token, user_id } = tokenResponse.data;
 
         try {
+            const storyData = {
+                accessToken: access_token,
+                imageUrl: req.body.imageUrl || 'https://miro.medium.com/v2/resize:fit:1024/1*Fj4jT_7yfiC7ERWYqSdRJA.jpeg',
+                caption: "Check out our new product! 🚀",
+                hashtags: ['newproduct', 'launch', 'exciting'],
+                link: {
+                    url: "https://playclanbilling.fynd.io/",
+                    linkText: "Click here to shop now"
+                }
+            };
+
             // Post story using the imported service
-            const storyResult = await postStory(
-                access_token,
-                'https://miro.medium.com/v2/resize:fit:1024/1*Fj4jT_7yfiC7ERWYqSdRJA.jpeg', // Replace with actual image URL
-                '#test story posting'
-            );
+            const storyResult = await postStory(storyData);
 
             // Return success response with all data
-            res.json({
-                success: true,
-                data: {
-                    accessToken: access_token,
-                    userId: user_id,
-                    storyDetails: storyResult.data,
-                    message: 'Story posted successfully'
-                }
-            });
+            res.json(storyResult);
 
         } catch (storyError) {
             console.error('Story posting error:', storyError);
