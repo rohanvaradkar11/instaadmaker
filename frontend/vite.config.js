@@ -58,8 +58,8 @@ export default defineConfig({
       "^/api(/|(\\?.*)?$)": proxyOptions,
       "^/fp(/|(\\?.*)?$)": proxyOptions,
       "^/adm(/|(\\?.*)?$)": proxyOptions,
-      "^/publish(/|(\\?.*)?$)": localProxyOptions,
-      "^/api/instagram/post(/|(\\?.*)?$)": localProxyOptions
+      "^/publish": localProxyOptions,
+      "^/api/instagram/post": localProxyOptions
     },
   },
 });

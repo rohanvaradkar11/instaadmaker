@@ -13,7 +13,8 @@ const productRouter = express.Router();
 const { OpenAI } = require("openai");
 const { postStory } = require('./instagramService');
 const { generateAndUploadImage } = require('./utils/helpers'); // Adjust the path as necessary
-const INSTAGRAM_CALL_BACK_DOMAIN='https://f01c-125-22-87-250.ngrok-free.app'
+const INSTAGRAM_CALL_BACK_DOMAIN='https://2d1a-45-127-45-4.ngrok-free.app'
+const { v4: uuidv4 } = require('uuid');
 
 // Hypothetical import for an image generation API
 // const { ImageGenerationApi } = require("image-generation-api");
@@ -58,6 +59,8 @@ const STATIC_PATH = process.env.NODE_ENV === 'production'
 const app = express();
 const platformApiRoutes = fdkExtension.platformApiRoutes;
 
+const stateDataMap = new Map(); // In-memory storage for state data
+
 // Middleware to parse cookies with a secret key
 app.use(cookieParser("ext.session"));
 
@@ -97,23 +100,31 @@ app.get('/publish', async (req, res) => {
             });
         }
 
-        // Define your parameters
-        const params = new URLSearchParams({
+        // Generate UUID and store data
+        const stateId = uuidv4();
+        const stateData = {
             ImageUrl: req.query.ImageUrl,
             caption: req.query.caption,
             hashTags: req.query.hashTags,
             productLink: req.query.productLink
-        });
+        };
+        
+        stateDataMap.set(stateId, stateData);
 
-        // Using the correct Instagram Basic Display API endpoint
-        const callbackUrl = new URL(`/api/instagram/post?${params.toString()}`, INSTAGRAM_CALL_BACK_DOMAIN).toString();
-        console.log("Callback URL ======> ", callbackUrl);
+        // Set expiry for the stored data (e.g., 1 hour)
+        setTimeout(() => {
+            stateDataMap.delete(stateId);
+        }, 60000); // 1 minute in milliseconds
 
+        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
+        
         const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize?' + new URLSearchParams({
             client_id: process.env.INSTAGRAM_CLIENT_ID,
             redirect_uri: callbackUrl,
             scope: 'instagram_business_basic,instagram_business_content_publish',
-            response_type: 'code'
+            response_type: 'code',
+            state: stateId,
+            response_mode: 'query'
         }).toString();
 
         console.log("instagramAuthUrl ======> ", instagramAuthUrl);
@@ -130,32 +141,41 @@ app.get('/publish', async (req, res) => {
 
 // Callback endpoint that receives the code
 app.get('/api/instagram/post', async (req, res) => {
-    console.log("req.query", req.query)
     const { code, state } = req.query;
     // const { code, ImageUrl, caption, hashTags, productLink } = req.query;
     
     if (!code) {
-        return res.status(400).json({ error: 'Authorization code not received' });
+        return res.status(400).json({ 
+            success: false,
+            error: 'Authorization code not received' 
+        });
     }
 
-    // Parse the state parameter to retrieve the original query parameters
-    const params = new URLSearchParams(state);
-    const ImageUrl = params.get('ImageUrl');
-    const caption = params.get('caption');
-    const hashTags = params.get('hashTags');
-    const productLink = params.get('productLink');
+    if (!state) {
+        return res.status(400).json({ 
+            success: false,
+            error: 'State parameter not received' 
+        });
+    }
+
+    // Retrieve stored data using state ID
+    const storedParams = stateDataMap.get(state);
+    if (!storedParams) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid or expired state parameter'
+        });
+    }
+
+    // Clean up stored data
+    stateDataMap.delete(state);
+
+    const { ImageUrl, caption, hashTags, productLink } = storedParams;
 
     try {
-        console.log("code", code)
-        const params = new URLSearchParams({
-            ImageUrl,
-            caption,
-            hashTags,
-            productLink
-        });
         // Exchange the code for an access token
+        const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
         // const callbackUrl = new URL('/api/instagram/post', INSTAGRAM_CALL_BACK_DOMAIN).toString();
-        const callbackUrl = new URL(`/api/instagram/post?${params.toString()}`, INSTAGRAM_CALL_BACK_DOMAIN).toString();
         const tokenResponse = await axios.post('https://api.instagram.com/oauth/access_token', {
             client_id: process.env.INSTAGRAM_CLIENT_ID,
             client_secret: process.env.INSTAGRAM_CLIENT_SECRET,
@@ -167,7 +187,7 @@ app.get('/api/instagram/post', async (req, res) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-        console.log("tokenResponse", tokenResponse)
+
         const { access_token, user_id } = tokenResponse.data;
 
         try {
